@@ -14,30 +14,30 @@ class Settings_Companies_ListView_Model extends Settings_Vtiger_ListView_Model
 	public static $recordsCount;
 
 	/** {@inheritdoc} */
-	public function getBasicLinks()
-	{
-		$basicLinks = parent::getBasicLinks();
-		$basicLinks[] = [
-			'linktype' => 'LISTVIEWBASIC',
-			'linklabel' => 'LBL_REGISTER_CRM_ONLINE',
-			'linkclass' => 'btn-light js-register-online ml-1',
-			'linkicon' => 'yfi yfi-register-online',
-			'showLabel' => 1,
-		];
-		$basicLinks[] = [
-			'linktype' => 'LISTVIEWBASIC',
-			'linklabel' => 'LBL_REGISTER_CRM_SERIAL',
-			'linkclass' => 'btn-light js-register-serial ml-1',
-			'linkicon' => 'yfi yfi-register-offline',
-			'showLabel' => 1,
-		];
-		$basicLinks[] = [
-			'linktype' => 'LISTVIEWBASIC',
-			'linklabel' => 'LBL_REGISTER_CHECK',
-			'linkclass' => 'btn-light js-register-check ml-1',
-			'linkicon' => 'mdi mdi-progress-check',
-			'showLabel' => 1,
-		];
-		return $basicLinks;
-	}
+	// public function getBasicLinks()
+	// {
+	// 	$basicLinks = parent::getBasicLinks();
+	// 	$basicLinks[] = [
+	// 		'linktype' => 'LISTVIEWBASIC',
+	// 		'linklabel' => 'LBL_REGISTER_CRM_ONLINE',
+	// 		'linkclass' => 'btn-light js-register-online ml-1',
+	// 		'linkicon' => 'yfi yfi-register-online',
+	// 		'showLabel' => 1,
+	// 	];
+	// 	$basicLinks[] = [
+	// 		'linktype' => 'LISTVIEWBASIC',
+	// 		'linklabel' => 'LBL_REGISTER_CRM_SERIAL',
+	// 		'linkclass' => 'btn-light js-register-serial ml-1',
+	// 		'linkicon' => 'yfi yfi-register-offline',
+	// 		'showLabel' => 1,
+	// 	];
+	// 	$basicLinks[] = [
+	// 		'linktype' => 'LISTVIEWBASIC',
+	// 		'linklabel' => 'LBL_REGISTER_CHECK',
+	// 		'linkclass' => 'btn-light js-register-check ml-1',
+	// 		'linkicon' => 'mdi mdi-progress-check',
+	// 		'showLabel' => 1,
+	// 	];
+	// 	return $basicLinks;
+	// }
 }

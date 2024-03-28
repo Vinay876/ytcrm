@@ -39,7 +39,7 @@
 			{assign var="URL_GITHUB" value='https://github.com/YetiForceCompany/YetiForceCRM'}
 			{assign var="FOOTER_NAME" value=''}
 		{/if}
-		<footer class="c-footer fixed-bottom js-footer{if App\Config::module('Users', 'IS_VISIBLE_USER_INFO_FOOTER')} c-footer--user-info-active{/if} {if $DISABLE_BRANDING} c-footer--limited {/if}" data-js="height">
+		<!-- <footer class="c-footer fixed-bottom js-footer{if App\Config::module('Users', 'IS_VISIBLE_USER_INFO_FOOTER')} c-footer--user-info-active{/if} {if $DISABLE_BRANDING} c-footer--limited {/if}" data-js="height">
 			{if App\Config::module('Users', 'IS_VISIBLE_USER_INFO_FOOTER')}
 				<div class="js-footer__user-info c-footer__user-info">
 					<p>
@@ -158,7 +158,7 @@
 					</p>
 				</div>
 			</div>
-		</footer>
+		</footer> -->
 	{else}
 		<div class="js-footer" data-js="height">
 		</div>

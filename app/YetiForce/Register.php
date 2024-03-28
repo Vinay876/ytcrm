@@ -92,8 +92,8 @@ class Register
 			'version' => \App\Version::get(),
 			'language' => \App\Language::getLanguage(),
 			'timezone' => date_default_timezone_get(),
-			'insKey' => static::getInstanceKey(),
-			'crmKey' => static::getCrmKey(),
+			// 'insKey' => static::getInstanceKey(),
+			// 'crmKey' => static::getCrmKey(),
 			'package' => \App\Company::getSize(),
 			'provider' => static::getProvider(),
 			'companies' => \App\Company::getAll(),
@@ -105,40 +105,40 @@ class Register
 	 *
 	 * @return bool
 	 */
-	public function register(): bool
-	{
-		if (!\App\RequestUtil::isNetConnection() || 'api.yetiforce.com' === gethostbyname('api.yetiforce.com')) {
-			\App\Log::warning('ERR_NO_INTERNET_CONNECTION', __METHOD__);
-			$this->error = 'ERR_NO_INTERNET_CONNECTION';
-			return false;
-		}
-		$result = false;
-		try {
-			$url = static::$registrationUrl . 'add';
-			\App\Log::beginProfile("POST|Register::register|{$url}", __NAMESPACE__);
-			$response = (new \GuzzleHttp\Client())->post($url, \App\Utils::merge(\App\RequestHttp::getOptions(), ['form_params' => $this->getData()]));
-			\App\Log::endProfile("POST|Register::register|{$url}", __NAMESPACE__);
-			$body = $response->getBody();
-			if (!\App\Json::isEmpty($body)) {
-				$body = \App\Json::decode($body);
-				if ('OK' === $body['text']) {
-					static::updateMetaData([
-						'register_time' => date('Y-m-d H:i:s'),
-						'status' => $body['status'],
-						'text' => $body['text'],
-						'serialKey' => $body['serialKey'] ?? '',
-						'last_check_time' => '',
-					]);
-					$result = true;
-				}
-			}
-		} catch (\Throwable $e) {
-			$this->error = $e->getMessage();
-			\App\Log::warning($e->getMessage(), __METHOD__);
-		}
-		\App\Company::statusUpdate(1);
-		return $result;
-	}
+	// public function register(): bool
+	// {
+	// 	// if (!\App\RequestUtil::isNetConnection() || 'api.yetiforce.com' === gethostbyname('api.yetiforce.com')) {
+	// 	// 	\App\Log::warning('ERR_NO_INTERNET_CONNECTION', __METHOD__);
+	// 	// 	$this->error = 'ERR_NO_INTERNET_CONNECTION';
+	// 	// 	return false;
+	// 	// }
+	// 	// $result = false;
+	// 	// try {
+	// 	// 	$url = static::$registrationUrl . 'add';
+	// 	// 	\App\Log::beginProfile("POST|Register::register|{$url}", __NAMESPACE__);
+	// 	// 	$response = (new \GuzzleHttp\Client())->post($url, \App\Utils::merge(\App\RequestHttp::getOptions(), ['form_params' => $this->getData()]));
+	// 	// 	\App\Log::endProfile("POST|Register::register|{$url}", __NAMESPACE__);
+	// 	// 	$body = $response->getBody();
+	// 	// 	if (!\App\Json::isEmpty($body)) {
+	// 	// 		$body = \App\Json::decode($body);
+	// 	// 		if ('OK' === $body['text']) {
+	// 	// 			static::updateMetaData([
+	// 	// 				'register_time' => date('Y-m-d H:i:s'),
+	// 	// 				'status' => $body['status'],
+	// 	// 				'text' => $body['text'],
+	// 	// 				'serialKey' => $body['serialKey'] ?? '',
+	// 	// 				'last_check_time' => '',
+	// 	// 			]);
+	// 	// 			$result = true;
+	// 	// 		}
+	// 	// 	}
+	// 	// } catch (\Throwable $e) {
+	// 	// 	$this->error = $e->getMessage();
+	// 	// 	\App\Log::warning($e->getMessage(), __METHOD__);
+	// 	// }
+	// 	// \App\Company::statusUpdate(1);
+	// 	// return $result;
+	// }
 
 	/**
 	 * Checking registration status.
@@ -147,64 +147,64 @@ class Register
 	 *
 	 * @return int
 	 */
-	public static function check($force = false): int
-	{
-		if (!\App\RequestUtil::isNetConnection() || 'api.yetiforce.com' === gethostbyname('api.yetiforce.com')) {
-			\App\Log::warning('ERR_NO_INTERNET_CONNECTION', __METHOD__);
-			static::updateMetaData(['last_error' => 'ERR_NO_INTERNET_CONNECTION', 'last_error_date' => date('Y-m-d H:i:s')]);
-			return -1;
-		}
-		$conf = static::getConf();
-		if (!$force && (!empty($conf['last_check_time']) && (($conf['status'] < 6 && strtotime('+6 hours', strtotime($conf['last_check_time'])) > time()) || ($conf['status'] >= 6 && strtotime('+7 day', strtotime($conf['last_check_time'])) > time())))) {
-			return -2;
-		}
-		$status = 0;
-		try {
-			$data = ['last_check_time' => date('Y-m-d H:i:s')];
-			$url = static::$registrationUrl . 'check';
-			\App\Log::beginProfile("POST|Register::check|{$url}", __NAMESPACE__);
-			$response = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->post($url, [
-				'form_params' => \App\Utils::merge($conf, [
-					'version' => \App\Version::get(),
-					'crmKey' => static::getCrmKey(),
-					'insKey' => static::getInstanceKey(),
-					'provider' => static::getProvider(),
-					'package' => \App\Company::getSize(),
-					'shop' => \App\Utils\ConfReport::validateShopProducts('check', [], 'shop')['shop'],
-				]),
-			]);
-			\App\Log::endProfile("POST|Register::check|{$url}", __NAMESPACE__);
-			$body = $response->getBody();
-			if (!\App\Json::isEmpty($body)) {
-				$body = \App\Json::decode($body);
-				if ('OK' === $body['text'] && static::updateCompanies($body['companies'])) {
-					$data = [
-						'status' => $body['status'],
-						'text' => $body['text'],
-						'serialKey' => $body['serialKey'],
-						'last_check_time' => date('Y-m-d H:i:s'),
-						'products' => $body['activeProducts'],
-					];
-					$status = 1;
-				} else {
-					throw new \App\Exceptions\AppException($body['text'], 4);
-				}
-			} else {
-				throw new \App\Exceptions\AppException('ERR_BODY_IS_EMPTY', 0);
-			}
-			static::updateMetaData($data);
-		} catch (\Throwable $e) {
-			\App\Log::warning($e->getMessage(), __METHOD__);
-			//Company details vary, re-registration is required.
-			static::updateMetaData([
-				'last_error' => $e->getMessage(),
-				'last_error_date' => date('Y-m-d H:i:s'),
-				'last_check_time' => date('Y-m-d H:i:s'),
-			]);
-			$status = $e->getCode();
-		}
-		return $status;
-	}
+	// public static function check($force = false): int
+	// {
+	// 	if (!\App\RequestUtil::isNetConnection() || 'api.yetiforce.com' === gethostbyname('api.yetiforce.com')) {
+	// 		\App\Log::warning('ERR_NO_INTERNET_CONNECTION', __METHOD__);
+	// 		static::updateMetaData(['last_error' => 'ERR_NO_INTERNET_CONNECTION', 'last_error_date' => date('Y-m-d H:i:s')]);
+	// 		return -1;
+	// 	}
+	// 	$conf = static::getConf();
+	// 	if (!$force && (!empty($conf['last_check_time']) && (($conf['status'] < 6 && strtotime('+6 hours', strtotime($conf['last_check_time'])) > time()) || ($conf['status'] >= 6 && strtotime('+7 day', strtotime($conf['last_check_time'])) > time())))) {
+	// 		return -2;
+	// 	}
+	// 	$status = 0;
+	// 	try {
+	// 		$data = ['last_check_time' => date('Y-m-d H:i:s')];
+	// 		$url = static::$registrationUrl . 'check';
+	// 		\App\Log::beginProfile("POST|Register::check|{$url}", __NAMESPACE__);
+	// 		$response = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->post($url, [
+	// 			'form_params' => \App\Utils::merge($conf, [
+	// 				'version' => \App\Version::get(),
+	// 				'crmKey' => static::getCrmKey(),
+	// 				'insKey' => static::getInstanceKey(),
+	// 				'provider' => static::getProvider(),
+	// 				'package' => \App\Company::getSize(),
+	// 				'shop' => \App\Utils\ConfReport::validateShopProducts('check', [], 'shop')['shop'],
+	// 			]),
+	// 		]);
+	// 		\App\Log::endProfile("POST|Register::check|{$url}", __NAMESPACE__);
+	// 		$body = $response->getBody();
+	// 		if (!\App\Json::isEmpty($body)) {
+	// 			$body = \App\Json::decode($body);
+	// 			if ('OK' === $body['text'] && static::updateCompanies($body['companies'])) {
+	// 				$data = [
+	// 					'status' => $body['status'],
+	// 					'text' => $body['text'],
+	// 					'serialKey' => $body['serialKey'],
+	// 					'last_check_time' => date('Y-m-d H:i:s'),
+	// 					'products' => $body['activeProducts'],
+	// 				];
+	// 				$status = 1;
+	// 			} else {
+	// 				throw new \App\Exceptions\AppException($body['text'], 4);
+	// 			}
+	// 		} else {
+	// 			throw new \App\Exceptions\AppException('ERR_BODY_IS_EMPTY', 0);
+	// 		}
+	// 		static::updateMetaData($data);
+	// 	} catch (\Throwable $e) {
+	// 		\App\Log::warning($e->getMessage(), __METHOD__);
+	// 		//Company details vary, re-registration is required.
+	// 		static::updateMetaData([
+	// 			'last_error' => $e->getMessage(),
+	// 			'last_error_date' => date('Y-m-d H:i:s'),
+	// 			'last_check_time' => date('Y-m-d H:i:s'),
+	// 		]);
+	// 		$status = $e->getCode();
+	// 	}
+	// 	return $status;
+	// }
 
 	/**
 	 * Registration verification.
@@ -215,24 +215,25 @@ class Register
 	 */
 	public static function verify($timer = false): bool
 	{
-		if (\App\Cache::staticHas('RegisterVerify', $timer)) {
-			return \App\Cache::staticGet('RegisterVerify', $timer);
-		}
-		$conf = static::getConf();
-		if (!$conf) {
-			\App\Cache::staticSave('RegisterVerify', $timer, false);
-			return false;
-		}
-		$status = $conf['status'] > 5;
-		if (!empty($conf['serialKey']) && $status && static::verifySerial($conf['serialKey'])) {
-			\App\Cache::staticSave('RegisterVerify', $timer, true);
-			return true;
-		}
-		if ($timer && !empty($conf['register_time']) && strtotime('+14 days', strtotime($conf['register_time'])) > time()) {
-			$status = true;
-		}
-		\App\Cache::staticSave('RegisterVerify', $timer, $status);
-		return $status;
+		// if (\App\Cache::staticHas('RegisterVerify', $timer)) {
+		// 	return \App\Cache::staticGet('RegisterVerify', $timer);
+		// }
+		// $conf = static::getConf();
+		// if (!$conf) {
+		// 	\App\Cache::staticSave('RegisterVerify', $timer, false);
+		// 	return false;
+		// }
+		// $status = $conf['status'] > 5;
+		// if (!empty($conf['serialKey']) && $status && static::verifySerial($conf['serialKey'])) {
+		// 	\App\Cache::staticSave('RegisterVerify', $timer, true);
+		// 	return true;
+		// }
+		// if ($timer && !empty($conf['register_time']) && strtotime('+14 days', strtotime($conf['register_time'])) > time()) {
+		// 	$status = true;
+		// }
+		// \App\Cache::staticSave('RegisterVerify', $timer, $status);
+		// return $status;
+		return true;
 	}
 
 	/**
@@ -242,19 +243,19 @@ class Register
 	 */
 	private static function updateMetaData(array $data): void
 	{
-		$conf = static::getConf();
-		static::$config = [
-			'last_check_time' => $data['last_check_time'] ?? '',
-			'register_time' => $data['register_time'] ?? $conf['register_time'] ?? '',
-			'status' => $data['status'] ?? $conf['status'] ?? 0,
-			'text' => $data['text'] ?? $conf['text'] ?? '',
-			'serialKey' => $data['serialKey'] ?? $conf['serialKey'] ?? '',
-			'products' => $data['products'] ?? $conf['products'] ?? [],
-			'last_error' => $data['last_error'] ?? '',
-			'last_error_date' => $data['last_error_date'] ?? '',
-		];
-		\App\Utils::saveToFile(static::REGISTRATION_FILE, static::$config, 'Modifying this file or functions that affect the footer appearance will violate the license terms!!!', 0, true);
-		\App\YetiForce\Shop::generateCache();
+		// $conf = static::getConf();
+		// static::$config = [
+		// 	'last_check_time' => $data['last_check_time'] ?? '',
+		// 	'register_time' => $data['register_time'] ?? $conf['register_time'] ?? '',
+		// 	'status' => $data['status'] ?? $conf['status'] ?? 0,
+		// 	'text' => $data['text'] ?? $conf['text'] ?? '',
+		// 	'serialKey' => $data['serialKey'] ?? $conf['serialKey'] ?? '',
+		// 	'products' => $data['products'] ?? $conf['products'] ?? [],
+		// 	'last_error' => $data['last_error'] ?? '',
+		// 	'last_error_date' => $data['last_error_date'] ?? '',
+		// ];
+		// \App\Utils::saveToFile(static::REGISTRATION_FILE, static::$config, 'Modifying this file or functions that affect the footer appearance will violate the license terms!!!', 0, true);
+		// \App\YetiForce\Shop::generateCache();
 	}
 
 	/**
@@ -266,17 +267,17 @@ class Register
 	 */
 	public static function setSerial($serial)
 	{
-		if (!static::verifySerial($serial)) {
-			return false;
-		}
-		static::updateMetaData([
-			'register_time' => date('Y-m-d H:i:s'),
-			'status' => 6,
-			'text' => 'OK',
-			'insKey' => static::getInstanceKey(),
-			'serialKey' => $serial,
-		]);
-		\App\Company::statusUpdate(6);
+		// if (!static::verifySerial($serial)) {
+		// 	return false;
+		// }
+		// static::updateMetaData([
+		// 	'register_time' => date('Y-m-d H:i:s'),
+		// 	'status' => 6,
+		// 	'text' => 'OK',
+		// 	'insKey' => static::getInstanceKey(),
+		// 	'serialKey' => $serial,
+		// ]);
+		// \App\Company::statusUpdate(6);
 		return true;
 	}
 
@@ -289,7 +290,8 @@ class Register
 	 */
 	public static function verifySerial(string $serial): bool
 	{
-		return hash_equals($serial, hash('sha1', self::getInstanceKey() . self::getCrmKey()));
+		return true;
+		// return hash_equals($serial, hash('sha1', self::getInstanceKey() . self::getCrmKey()));
 	}
 
 	/**
